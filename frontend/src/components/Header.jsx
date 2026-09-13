@@ -4,10 +4,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { api } from '../services/api';
-import { Bell, LogOut, User, Check, Sun, Moon, Laptop, Trash2 } from 'lucide-react';
+import { Bell, LogOut, User, Check, Sun, Moon, Laptop, Trash2, Menu, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export function Header() {
+export function Header({ isSidebarOpen, onToggleSidebar }) {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
@@ -82,15 +82,24 @@ export function Header() {
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm transition-colors duration-200">
-      {/* System Brand Header */}
-      <div className="flex items-center gap-3">
+    <header className="h-16 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-sm transition-colors duration-200">
+      {/* System Brand Header & Mobile Toggle */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        <button
+          onClick={onToggleSidebar}
+          aria-label="Toggle Navigation Menu"
+          className="p-2 -ml-1 rounded-xl text-gray-600 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-800 lg:hidden transition-colors"
+          title="Toggle Navigation Menu"
+        >
+          {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+
         <div className="w-9 h-9 bg-brand-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md shadow-brand-500/20">
           OA
         </div>
         <div>
-          <span className="font-bold text-gray-900 dark:text-white tracking-tight">OfficeAssist</span>
-          <span className="text-xs text-gray-500 dark:text-slate-400 block font-medium">Service Request Platform</span>
+          <span className="font-bold text-gray-900 dark:text-white tracking-tight text-sm sm:text-base">OfficeAssist</span>
+          <span className="text-[10px] sm:text-xs text-gray-500 dark:text-slate-400 hidden sm:block font-medium">Service Request Platform</span>
         </div>
       </div>
 
