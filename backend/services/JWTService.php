@@ -64,22 +64,30 @@ class JWTService {
 
     public static function setAuthCookie(string $token): void {
         $config = require __DIR__ . '/../config/app.php';
+        $isHttps = (getenv('APP_ENV') === 'production') || 
+                   (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
+                   (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
         setcookie('officeassist_token', $token, [
             'expires' => time() + $config['jwt_ttl'],
             'path' => '/',
             'httponly' => true,
-            'samesite' => 'Lax',
-            'secure' => false // set to true in production HTTPS
+            'samesite' => $isHttps ? 'None' : 'Lax',
+            'secure' => $isHttps
         ]);
     }
 
     public static function clearAuthCookie(): void {
+        $isHttps = (getenv('APP_ENV') === 'production') || 
+                   (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
+                   (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
         setcookie('officeassist_token', '', [
             'expires' => time() - 3600,
             'path' => '/',
             'httponly' => true,
-            'samesite' => 'Lax',
-            'secure' => false
+            'samesite' => $isHttps ? 'None' : 'Lax',
+            'secure' => $isHttps
         ]);
     }
 }
