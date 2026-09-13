@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
-import { Users, Building2, Plus, ShieldCheck, UserCheck, Key, Lock, Unlock } from 'lucide-react';
+import { Users, Building2, Plus, ShieldCheck, UserCheck, Key, Lock, Unlock, Eye, EyeOff } from 'lucide-react';
 
 export function AdminDashboard({ initialTab = 'users' }) {
   const toast = useToast();
@@ -27,6 +27,10 @@ export function AdminDashboard({ initialTab = 'users' }) {
   const [newRole, setNewRole] = useState('EMPLOYEE');
   const [newDeptId, setNewDeptId] = useState('');
   const [newPassword, setNewPassword] = useState('password123');
+
+  // Password visibility states
+  const [showCreateUserPassword, setShowCreateUserPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
 
   // Password reset modal state
   const [resetUserId, setResetUserId] = useState(null);
@@ -504,7 +508,19 @@ export function AdminDashboard({ initialTab = 'users' }) {
                   type="text"
                   value={newFullName}
                   onChange={(e) => setNewFullName(e.target.value)}
-                  placeholder="e.g. Jane Doe"
+                  placeholder="e.g. Daudi Mohamedi"
+                  className="w-full p-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Email *</label>
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder="e.g. daudi.mohamedi@officeassist.com"
                   className="w-full p-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                   required
                 />
@@ -516,7 +532,7 @@ export function AdminDashboard({ initialTab = 'users' }) {
                   type="text"
                   value={newPhone}
                   onChange={(e) => setNewPhone(e.target.value)}
-                  placeholder="e.g. +1 555-0199"
+                  placeholder="+255xxxxxxxxx"
                   className="w-full p-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
@@ -552,14 +568,25 @@ export function AdminDashboard({ initialTab = 'users' }) {
 
               <div>
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Password *</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Password"
-                  className="w-full p-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showCreateUserPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Password"
+                    className="w-full p-2.5 pr-10 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateUserPassword((prev) => !prev)}
+                    className="absolute right-2.5 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    title={showCreateUserPassword ? 'Hide password' : 'Show password'}
+                    aria-label={showCreateUserPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showCreateUserPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
@@ -590,13 +617,24 @@ export function AdminDashboard({ initialTab = 'users' }) {
             <form onSubmit={handleResetPassword} className="space-y-3 text-xs">
               <div>
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">New Password *</label>
-                <input
-                  type="text"
-                  value={resetPasswordVal}
-                  onChange={(e) => setResetPasswordVal(e.target.value)}
-                  className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showResetPassword ? 'text' : 'password'}
+                    value={resetPasswordVal}
+                    onChange={(e) => setResetPasswordVal(e.target.value)}
+                    className="w-full p-3 pr-10 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPassword((prev) => !prev)}
+                    className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                    title={showResetPassword ? 'Hide password' : 'Show password'}
+                    aria-label={showResetPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

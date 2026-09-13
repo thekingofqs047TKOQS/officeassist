@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
-import { KeyRound, Lock, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { KeyRound, Lock, CheckCircle2, ShieldAlert, Eye, EyeOff } from 'lucide-react';
 
 export function ChangePassword() {
   const { user, changePassword, logout } = useAuth();
@@ -18,6 +18,11 @@ export function ChangePassword() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -98,14 +103,22 @@ export function ChangePassword() {
             </label>
             <div className="relative">
               <input
-                type="password"
+                type={showCurrentPass ? 'text' : 'password'}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Enter current default password"
-                className="w-full p-3 pl-10 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                className="w-full p-3 pl-10 pr-10 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
                 required
               />
               <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+              <button
+                type="button"
+                onClick={() => setShowCurrentPass((prev) => !prev)}
+                className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                title={showCurrentPass ? 'Hide password' : 'Show password'}
+              >
+                {showCurrentPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
@@ -115,14 +128,22 @@ export function ChangePassword() {
             </label>
             <div className="relative">
               <input
-                type="password"
+                type={showNewPass ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="At least 6 characters"
-                className="w-full p-3 pl-10 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                className="w-full p-3 pl-10 pr-10 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
                 required
               />
               <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+              <button
+                type="button"
+                onClick={() => setShowNewPass((prev) => !prev)}
+                className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                title={showNewPass ? 'Hide password' : 'Show password'}
+              >
+                {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
@@ -132,14 +153,22 @@ export function ChangePassword() {
             </label>
             <div className="relative">
               <input
-                type="password"
+                type={showConfirmPass ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Re-enter new password"
-                className="w-full p-3 pl-10 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
+                className="w-full p-3 pl-10 pr-10 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all"
                 required
               />
               <CheckCircle2 className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPass((prev) => !prev)}
+                className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                title={showConfirmPass ? 'Hide password' : 'Show password'}
+              >
+                {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
