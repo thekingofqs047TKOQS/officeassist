@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, UserCheck } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 
 export function Login() {
   const { login } = useAuth();
@@ -36,11 +36,6 @@ export function Login() {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleQuickLogin = (email) => {
-    setUsername(email);
-    setPassword('password123');
   };
 
   return (
@@ -99,51 +94,6 @@ export function Login() {
           )}
         </button>
       </form>
-
-      {/* Quick Demo Test Accounts */}
-      <div className="mt-8 pt-6 border-t border-gray-100 dark:border-slate-800">
-        <div className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-          <UserCheck className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-          Quick Test Accounts (Password: password123)
-        </div>
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <button
-            type="button"
-            onClick={() => handleQuickLogin('sarah.jenkins@officeassist.com')}
-            className="p-2.5 rounded-xl border border-gray-200 dark:border-slate-700 dark:bg-slate-800/60 hover:border-brand-500 dark:hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-brand-950/40 text-left transition-all"
-          >
-            <div className="font-semibold text-gray-800 dark:text-slate-200">Sarah Jenkins</div>
-            <div className="text-[10px] text-gray-500 dark:text-slate-400">Regular Employee</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleQuickLogin('john.doe@officeassist.com')}
-            className="p-2.5 rounded-xl border border-gray-200 dark:border-slate-700 dark:bg-slate-800/60 hover:border-purple-500 dark:hover:border-purple-500 hover:bg-purple-50/50 dark:hover:bg-purple-950/40 text-left transition-all"
-          >
-            <div className="font-semibold text-gray-800 dark:text-slate-200">John Doe</div>
-            <div className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">IT Staff Handler</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleQuickLogin('alex.mercer@officeassist.com')}
-            className="p-2.5 rounded-xl border border-gray-200 dark:border-slate-700 dark:bg-slate-800/60 hover:border-amber-500 dark:hover:border-amber-500 hover:bg-amber-50/50 dark:hover:bg-amber-950/40 text-left transition-all"
-          >
-            <div className="font-semibold text-gray-800 dark:text-slate-200">Alex Mercer</div>
-            <div className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">IT Department Head</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleQuickLogin('admin@officeassist.com')}
-            className="p-2.5 rounded-xl border border-gray-200 dark:border-slate-700 dark:bg-slate-800/60 hover:border-emerald-500 dark:hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/40 text-left transition-all"
-          >
-            <div className="font-semibold text-gray-800 dark:text-slate-200">System Admin</div>
-            <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">System Admin</div>
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
