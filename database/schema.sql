@@ -63,6 +63,7 @@ CREATE TABLE users (
     location_id BIGINT UNSIGNED NULL,   -- User's Primary Desk/Office Location
     role ENUM('EMPLOYEE', 'DEPARTMENT_STAFF', 'DEPARTMENT_MANAGER', 'DEPARTMENT_HEAD', 'SYSTEM_ADMIN') NOT NULL DEFAULT 'EMPLOYEE',
     status ENUM('ACTIVE', 'INACTIVE', 'SUSPENDED') NOT NULL DEFAULT 'ACTIVE',
+    must_change_password TINYINT(1) NOT NULL DEFAULT 1,
     profile_photo VARCHAR(255) NULL,
     last_login_at DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -306,6 +307,7 @@ CREATE TABLE notifications (
     type VARCHAR(50) NOT NULL DEFAULT 'SYSTEM',
     is_read TINYINT(1) NOT NULL DEFAULT 0,
     read_at DATETIME NULL,
+    deleted_at DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     INDEX idx_notifications_user_read (user_id, is_read, created_at),

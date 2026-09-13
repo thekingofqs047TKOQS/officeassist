@@ -73,7 +73,9 @@ class UserController {
         $role = trim($body['role'] ?? 'EMPLOYEE');
         $departmentId = isset($body['department_id']) ? (int)$body['department_id'] : null;
         $locationId = isset($body['location_id']) ? (int)$body['location_id'] : null;
-        $password = trim($body['password'] ?? 'password123');
+        $appConfig = require __DIR__ . '/../config/app.php';
+        $defaultPassword = $appConfig['default_password'] ?? 'password123';
+        $password = !empty($body['password']) ? trim($body['password']) : $defaultPassword;
 
         if (empty($employeeId) || empty($fullName) || empty($email)) {
             http_response_code(400);
@@ -84,8 +86,8 @@ class UserController {
         try {
             $db = Database::getInstance();
             $stmt = $db->prepare("
-                INSERT INTO users (employee_id, full_name, email, phone, password_hash, department_id, location_id, role, status)
-                VALUES (:employee_id, :full_name, :email, :phone, :password_hash, :department_id, :location_id, :role, 'ACTIVE')
+                INSERT INTO users (employee_id, full_name, email, phone, password_hash, department_id, location_id, role, status, must_change_password)
+                VALUES (:employee_id, :full_name, :email, :phone, :password_hash, :department_id, :location_id, :role, 'ACTIVE', 1)
             ");
 
             $passwordHash = password_hash($password, PASSWORD_BCRYPT);
@@ -149,7 +151,43 @@ class UserController {
             if (isset($body['phone'])) { $updates[] = "phone = :phone"; $params['phone'] = trim($body['phone']); }
             if (isset($body['role'])) { $updates[] = "role = :role"; $params['role'] = trim($body['role']); }
             if (isset($body['status'])) { $updates[] = "status = :status"; $params['status'] = trim($body['status']); }
-            if (array_key_exists('department_id', $body)) { $updates[] = "department_id = :department_id"; $params['department_id'] = $body['department_id'] ? (int)$body['department_id'] : null; }
+            if (array_key_exists('department_id', $body)) {
+                $newDeptId = $body['department_id'] ? (int)$body['department_id'] : null;
+                if ($newDeptId !== null) {
+                    $chkDept = $db->prepare("SELECT id FROM departments WHERE id = :id AND status = 'ACTIVE'");
+                    $chkDept->execute(['id' => $newDeptId]);
+                    if (!$chkDept->fetch()) {
+                        http_response_code(400);
+                        echo json_encode(['success' => false, 'message' => 'Selected department does not exist or is inactive.']);
+                        return;
+                    }
+                }
+
+                $updates[] = "department_id = :department_id";
+                $params['department_id'] = $newDeptId;
+
+                // Sync department_members for consistent HOD & department staffing relationships
+                $effectiveRole = $body['role'] ?? $user['role'];
+                if ($newDeptId !== null) {
+                    if (in_array($effectiveRole, ['DEPARTMENT_HEAD', 'DEPARTMENT_MANAGER'])) {
+                        $oldHod = $db->prepare("UPDATE users SET role = 'EMPLOYEE' WHERE department_id = :dept_id AND id != :id AND role IN ('DEPARTMENT_HEAD', 'DEPARTMENT_MANAGER')");
+                        $oldHod->execute(['dept_id' => $newDeptId, 'id' => $id]);
+
+                        $oldHodMem = $db->prepare("UPDATE department_members SET role_in_department = 'STAFF' WHERE department_id = :dept_id AND user_id != :id AND role_in_department IN ('HEAD', 'MANAGER')");
+                        $oldHodMem->execute(['dept_id' => $newDeptId, 'id' => $id]);
+                    }
+
+                    $delMem = $db->prepare("DELETE FROM department_members WHERE user_id = :user_id");
+                    $delMem->execute(['user_id' => $id]);
+
+                    $serviceRole = in_array($effectiveRole, ['DEPARTMENT_HEAD', 'DEPARTMENT_MANAGER']) ? 'MANAGER' : 'STAFF';
+                    $insMem = $db->prepare("INSERT INTO department_members (department_id, user_id, role_in_department) VALUES (:dept_id, :user_id, :role_in_dept)");
+                    $insMem->execute(['dept_id' => $newDeptId, 'user_id' => $id, 'role_in_dept' => $serviceRole]);
+                } else {
+                    $delMem = $db->prepare("DELETE FROM department_members WHERE user_id = :user_id");
+                    $delMem->execute(['user_id' => $id]);
+                }
+            }
             if (array_key_exists('location_id', $body)) { $updates[] = "location_id = :location_id"; $params['location_id'] = $body['location_id'] ? (int)$body['location_id'] : null; }
 
             if (!empty($body['password'])) {
@@ -163,7 +201,7 @@ class UserController {
                 $stmt->execute($params);
             }
 
-            // Update service memberships
+            // Update service memberships if explicitly provided
             if (isset($body['service_department_id'])) {
                 $delMem = $db->prepare("DELETE FROM department_members WHERE user_id = :user_id");
                 $delMem->execute(['user_id' => $id]);
@@ -188,18 +226,14 @@ class UserController {
         $currentUser = AuthMiddleware::authenticate();
         RBACMiddleware::requireRole($currentUser, ['SYSTEM_ADMIN']);
 
-        $body = json_decode(file_get_contents('php://input'), true);
-        $newPassword = trim($body['new_password'] ?? '');
-
-        if (empty($newPassword)) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'new_password is required.']);
-            return;
-        }
+        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $appConfig = require __DIR__ . '/../config/app.php';
+        $defaultPassword = $appConfig['default_password'] ?? 'password123';
+        $newPassword = !empty($body['new_password']) ? trim($body['new_password']) : $defaultPassword;
 
         try {
             $db = Database::getInstance();
-            $stmt = $db->prepare("UPDATE users SET password_hash = :hash WHERE id = :id");
+            $stmt = $db->prepare("UPDATE users SET password_hash = :hash, must_change_password = 1 WHERE id = :id");
             $stmt->execute([
                 'hash' => password_hash($newPassword, PASSWORD_BCRYPT),
                 'id' => $id
@@ -207,7 +241,7 @@ class UserController {
 
             AuditService::log($currentUser['id'], 'USER_PASSWORD_RESET', 'users', $id, null, ['reset_by' => $currentUser['id']]);
 
-            echo json_encode(['success' => true, 'message' => 'User password reset successfully']);
+            echo json_encode(['success' => true, 'message' => 'User password reset to default successfully']);
         } catch (Exception $e) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);

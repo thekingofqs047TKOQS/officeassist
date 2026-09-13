@@ -1,7 +1,7 @@
 // frontend/src/App.jsx
 
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -10,6 +10,7 @@ import { MainLayout } from './layouts/MainLayout';
 import { AuthLayout } from './layouts/AuthLayout';
 
 import { Login } from './pages/Login';
+import { ChangePassword } from './pages/ChangePassword';
 import { EmployeeDashboard } from './pages/EmployeeDashboard';
 import { StaffDashboard } from './pages/StaffDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
@@ -19,6 +20,7 @@ import { RequestDetail } from './pages/RequestDetail';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -30,6 +32,10 @@ function ProtectedRoute({ children, allowedRoles }) {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (user.must_change_password && location.pathname !== '/change-password') {
+    return <Navigate to="/change-password" replace />;
   }
 
   if (allowedRoles) {
@@ -75,6 +81,16 @@ export function App() {
               <Route element={<AuthLayout />}>
                 <Route path="/login" element={<Login />} />
               </Route>
+
+              {/* Force Password Change Route */}
+              <Route
+                path="/change-password"
+                element={
+                  <ProtectedRoute>
+                    <ChangePassword />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Protected App Routes */}
               <Route

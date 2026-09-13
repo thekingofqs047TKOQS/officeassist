@@ -50,8 +50,19 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const changePassword = async (data) => {
+    const res = await api.changePassword(data);
+    if (res.data && res.data.user) {
+      if (res.data.token) {
+        localStorage.setItem('officeassist_token', res.data.token);
+      }
+      setUser(res.data.user);
+    }
+    return res;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, login, logout, checkAuth }}>
+    <AuthContext.Provider value={{ user, setUser, loading, login, logout, changePassword, checkAuth }}>
       {children}
     </AuthContext.Provider>
   );

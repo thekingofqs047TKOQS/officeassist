@@ -42,6 +42,10 @@ function routeRequest(string $method, string $uri): void {
         AuthController::me();
         return;
     }
+    if ($method === 'POST' && $uri === '/auth/change-password') {
+        AuthController::changePassword();
+        return;
+    }
 
     // SLA Routes
     if ($method === 'GET' && $uri === '/sla') {
@@ -96,6 +100,10 @@ function routeRequest(string $method, string $uri): void {
     }
     if ($method === 'GET' && preg_match('#^/departments/(\d+)/staff$#', $uri, $matches)) {
         DepartmentController::getStaff((int)$matches[1]);
+        return;
+    }
+    if ($method === 'POST' && preg_match('#^/departments/(\d+)/assign-hod$#', $uri, $matches)) {
+        DepartmentController::assignHod((int)$matches[1]);
         return;
     }
 

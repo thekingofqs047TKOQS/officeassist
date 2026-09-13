@@ -32,6 +32,15 @@ export function AdminDashboard({ initialTab = 'users' }) {
   const [resetUserId, setResetUserId] = useState(null);
   const [resetPasswordVal, setResetPasswordVal] = useState('password123');
 
+  // HOD Modal state
+  const [showHodModal, setShowHodModal] = useState(false);
+  const [selectedHodDept, setSelectedHodDept] = useState(null);
+  const [selectedHodUserId, setSelectedHodUserId] = useState('');
+
+  // Change Department Modal state
+  const [changeDeptUser, setChangeDeptUser] = useState(null);
+  const [selectedNewDeptId, setSelectedNewDeptId] = useState('');
+
   useEffect(() => {
     setTab(initialTab);
   }, [initialTab]);
@@ -53,6 +62,50 @@ export function AdminDashboard({ initialTab = 'users' }) {
       toast.error('Failed to load system management data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenHodModal = (dept) => {
+    const currentHod = users.find((u) => Number(u.department_id) === Number(dept.id) && (u.role === 'DEPARTMENT_HEAD' || u.role === 'DEPARTMENT_MANAGER'));
+    setSelectedHodDept(dept);
+    setSelectedHodUserId(currentHod ? String(currentHod.id) : '');
+    setShowHodModal(true);
+  };
+
+  const handleSaveHod = async (e) => {
+    e.preventDefault();
+    if (!selectedHodDept || !selectedHodUserId) return;
+
+    try {
+      const res = await api.assignDepartmentHod(selectedHodDept.id, Number(selectedHodUserId));
+      toast.success(res.message || 'HOD assigned successfully!');
+      setShowHodModal(false);
+      setSelectedHodDept(null);
+      setSelectedHodUserId('');
+      fetchAdminData();
+    } catch (err) {
+      toast.error(err.message || 'Failed to assign HOD');
+    }
+  };
+
+  const handleOpenChangeDeptModal = (userObj) => {
+    setChangeDeptUser(userObj);
+    setSelectedNewDeptId(userObj.department_id ? String(userObj.department_id) : '');
+  };
+
+  const handleChangeDeptSubmit = async (e) => {
+    e.preventDefault();
+    if (!changeDeptUser) return;
+
+    try {
+      const deptIdVal = selectedNewDeptId ? Number(selectedNewDeptId) : null;
+      await api.updateUser(changeDeptUser.id, { department_id: deptIdVal });
+      toast.success(`Department for '${changeDeptUser.full_name}' updated successfully!`);
+      setChangeDeptUser(null);
+      setSelectedNewDeptId('');
+      fetchAdminData();
+    } catch (err) {
+      toast.error(err.message || 'Failed to update user department');
     }
   };
 
@@ -295,9 +348,15 @@ export function AdminDashboard({ initialTab = 'users' }) {
                         </button>
                         <button
                           onClick={() => setResetUserId(u.id)}
-                          className="text-xs font-semibold px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                          className="text-xs font-semibold px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                         >
                           Reset Password
+                        </button>
+                        <button
+                          onClick={() => handleOpenChangeDeptModal(u)}
+                          className="text-xs font-semibold px-2.5 py-1 rounded-lg border border-brand-200 dark:border-brand-900/50 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/40 transition-colors"
+                        >
+                          Change Department
                         </button>
                       </td>
                     </tr>
@@ -333,8 +392,28 @@ export function AdminDashboard({ initialTab = 'users' }) {
                       <tr key={d.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                         <td className="px-6 py-4 font-mono font-bold text-brand-700 dark:text-brand-300">{d.code}</td>
                         <td className="px-6 py-4 font-bold text-slate-900 dark:text-slate-200">{d.name}</td>
-                        <td className="px-6 py-4 font-semibold text-purple-700 dark:text-purple-300">
-                          {hod ? hod.full_name : '—'}
+                        <td className="px-6 py-4">
+                          {hod ? (
+                            <div className="space-y-1">
+                              <div className="font-bold text-purple-700 dark:text-purple-300">{hod.full_name}</div>
+                              <button
+                                onClick={() => handleOpenHodModal(d)}
+                                className="text-[11px] font-bold px-2.5 py-1 rounded-lg border border-purple-200 dark:border-purple-900/50 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors"
+                              >
+                                Change HOD
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="space-y-1">
+                              <div className="font-medium text-slate-400 dark:text-slate-500 italic">No HOD Assigned</div>
+                              <button
+                                onClick={() => handleOpenHodModal(d)}
+                                className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-brand-600 hover:bg-brand-700 text-white shadow-sm transition-colors"
+                              >
+                                Assign HOD
+                              </button>
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${d.status === 'ACTIVE' ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
@@ -533,6 +612,107 @@ export function AdminDashboard({ initialTab = 'users' }) {
                   className="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow"
                 >
                   Save Password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Assign / Change HOD */}
+      {showHodModal && selectedHodDept && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-800 space-y-4 animate-in fade-in">
+            <h3 className="font-bold text-slate-900 dark:text-white text-lg">
+              {users.some((u) => Number(u.department_id) === Number(selectedHodDept.id) && (u.role === 'DEPARTMENT_HEAD' || u.role === 'DEPARTMENT_MANAGER')) ? 'Change HOD' : 'Assign HOD'}
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Department: <strong className="text-slate-900 dark:text-white">{selectedHodDept.name} ({selectedHodDept.code})</strong>
+            </p>
+
+            <form onSubmit={handleSaveHod} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Select User to set as HOD *</label>
+                <select
+                  value={selectedHodUserId}
+                  onChange={(e) => setSelectedHodUserId(e.target.value)}
+                  className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
+                  required
+                >
+                  <option value="">-- Select User --</option>
+                  {users
+                    .filter((u) => u.status === 'ACTIVE' && u.role !== 'SYSTEM_ADMIN')
+                    .map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.full_name} ({u.role}{u.department_name ? ` - ${u.department_name}` : ''})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowHodModal(false); setSelectedHodDept(null); }}
+                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow"
+                >
+                  Save HOD
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Change Department */}
+      {changeDeptUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-800 space-y-4 animate-in fade-in">
+            <h3 className="font-bold text-slate-900 dark:text-white text-lg">Change Department</h3>
+            <div className="text-xs text-slate-600 dark:text-slate-300 space-y-1">
+              <p>User: <strong className="text-slate-900 dark:text-white">{changeDeptUser.full_name}</strong> ({changeDeptUser.role === 'DEPARTMENT_MANAGER' ? 'DEPARTMENT_HEAD' : changeDeptUser.role === 'DEPARTMENT_STAFF' ? 'EMPLOYEE' : changeDeptUser.role})</p>
+              <p>Current Department: <span className="font-semibold text-brand-600 dark:text-brand-400">{changeDeptUser.department_name || 'None'}</span></p>
+            </div>
+
+            <form onSubmit={handleChangeDeptSubmit} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">New Department *</label>
+                <select
+                  value={selectedNewDeptId}
+                  onChange={(e) => setSelectedNewDeptId(e.target.value)}
+                  className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
+                  required
+                >
+                  <option value="">-- Select Department --</option>
+                  {departments
+                    .filter((d) => d.status === 'ACTIVE')
+                    .map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name} ({d.code})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setChangeDeptUser(null); setSelectedNewDeptId(''); }}
+                  className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow transition-all"
+                >
+                  Save Department
                 </button>
               </div>
             </form>

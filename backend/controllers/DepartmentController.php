@@ -141,4 +141,94 @@ class DepartmentController {
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
     }
+
+    public static function assignHod(int $departmentId): void {
+        $user = AuthMiddleware::authenticate();
+        RBACMiddleware::requireRole($user, ['SYSTEM_ADMIN']);
+
+        $body = json_decode(file_get_contents('php://input'), true);
+        $targetUserId = isset($body['user_id']) ? (int)$body['user_id'] : 0;
+
+        if (!$targetUserId) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'User ID is required.']);
+            return;
+        }
+
+        $db = Database::getInstance();
+
+        try {
+            $deptStmt = $db->prepare("SELECT id, name FROM departments WHERE id = :id");
+            $deptStmt->execute(['id' => $departmentId]);
+            $dept = $deptStmt->fetch();
+            if (!$dept) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Department not found']);
+                return;
+            }
+
+            $userStmt = $db->prepare("SELECT id, full_name, role FROM users WHERE id = :id");
+            $userStmt->execute(['id' => $targetUserId]);
+            $targetUser = $userStmt->fetch();
+            if (!$targetUser) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'User not found']);
+                return;
+            }
+
+            $db->beginTransaction();
+
+            // Reset any existing HOD for this department to EMPLOYEE to prevent duplicate HODs
+            $oldHodStmt = $db->prepare("
+                UPDATE users 
+                SET role = 'EMPLOYEE' 
+                WHERE department_id = :dept_id 
+                  AND role IN ('DEPARTMENT_HEAD', 'DEPARTMENT_MANAGER')
+            ");
+            $oldHodStmt->execute(['dept_id' => $departmentId]);
+
+            $oldMemStmt = $db->prepare("
+                UPDATE department_members 
+                SET role_in_department = 'STAFF' 
+                WHERE department_id = :dept_id 
+                  AND role_in_department IN ('HEAD', 'MANAGER')
+            ");
+            $oldMemStmt->execute(['dept_id' => $departmentId]);
+
+            // Set target user as HOD of this department
+            $updUserStmt = $db->prepare("
+                UPDATE users 
+                SET department_id = :dept_id, role = 'DEPARTMENT_HEAD' 
+                WHERE id = :user_id
+            ");
+            $updUserStmt->execute(['dept_id' => $departmentId, 'user_id' => $targetUserId]);
+
+            $delMem = $db->prepare("DELETE FROM department_members WHERE user_id = :user_id");
+            $delMem->execute(['user_id' => $targetUserId]);
+
+            $insMem = $db->prepare("
+                INSERT INTO department_members (department_id, user_id, role_in_department) 
+                VALUES (:dept_id, :user_id, 'MANAGER')
+            ");
+            $insMem->execute(['dept_id' => $departmentId, 'user_id' => $targetUserId]);
+
+            $db->commit();
+
+            AuditService::log($user['id'], 'HOD_ASSIGNED', 'departments', $departmentId, null, [
+                'target_user_id' => $targetUserId,
+                'target_user_name' => $targetUser['full_name']
+            ]);
+
+            echo json_encode([
+                'success' => true, 
+                'message' => "Successfully assigned {$targetUser['full_name']} as HOD of {$dept['name']}"
+            ]);
+        } catch (Exception $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
 }

@@ -49,6 +49,7 @@ export const api = {
   login: (credentials) => apiFetch('/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),
   logout: () => apiFetch('/auth/logout', { method: 'POST' }),
   me: () => apiFetch('/auth/me'),
+  changePassword: (data) => apiFetch('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
 
   // SLA
   getSLASettings: (deptId) => apiFetch(`/sla${deptId ? `?department_id=${deptId}` : ''}`),
@@ -87,6 +88,7 @@ export const api = {
   getDepartments: (includeInactive = false) => apiFetch(`/departments${includeInactive ? '?include_inactive=1' : ''}`),
   createDepartment: (deptData) => apiFetch('/departments', { method: 'POST', body: JSON.stringify(deptData) }),
   updateDepartment: (id, deptData) => apiFetch(`/departments/${id}`, { method: 'PUT', body: JSON.stringify(deptData) }),
+  assignDepartmentHod: (deptId, userId) => apiFetch(`/departments/${deptId}/assign-hod`, { method: 'POST', body: JSON.stringify({ user_id: userId }) }),
 
   getCategories: (deptId, includeInactive = false) => apiFetch(`/departments/${deptId}/categories${includeInactive ? '?include_inactive=1' : ''}`),
   createCategory: (catData) => apiFetch('/categories', { method: 'POST', body: JSON.stringify(catData) }),

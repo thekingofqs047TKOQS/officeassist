@@ -24,9 +24,13 @@ export function Login() {
 
     setSubmitting(true);
     try {
-      await login(username, password);
+      const res = await login(username, password);
       toast.success('Successfully logged in!');
-      navigate('/dashboard');
+      if (res?.data?.user?.must_change_password) {
+        navigate('/change-password', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (err) {
       toast.error(err.message || 'Login failed. Please check credentials.');
     } finally {

@@ -16,7 +16,8 @@ if (strpos($_SERVER['REQUEST_URI'] ?? '', '/download') === false) {
 
 // Global Exception & Error Handler
 set_exception_handler(function (Throwable $e) {
-    $code = $e->getCode() >= 400 && $e->getCode() <= 599 ? $e->getCode() : 500;
+    $rawCode = $e->getCode();
+    $code = (is_int($rawCode) && $rawCode >= 400 && $rawCode <= 599) ? $rawCode : 500;
     http_response_code($code);
     
     $response = [

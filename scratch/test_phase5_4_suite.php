@@ -5,6 +5,7 @@ define('BASE_URL', 'http://127.0.0.1:8000/api');
 
 class Phase54TestSuite {
     private array $cookies = [];
+    private array $tokens = [];
     private int $passed = 0;
     private int $failed = 0;
     private ?int $assignedReqId = null;
@@ -13,6 +14,9 @@ class Phase54TestSuite {
         echo "\n===============================================================\n";
         echo "   OFFICEASSIST PHASE 5.4 3-ROLE WORKFLOW & SECURITY SUITE     \n";
         echo "===============================================================\n\n";
+
+        // 0. First-Login Password Change Workflow
+        $this->testFirstLoginPasswordChangeWorkflow();
 
         // 1. Admin Restrictions & Management
         $this->testAdminRestrictionsAndManagement();
@@ -44,7 +48,46 @@ class Phase54TestSuite {
         }
     }
 
-    private function login(string $email, string $password, string $roleKey): string {
+    private function testFirstLoginPasswordChangeWorkflow(): void {
+        echo "--- Testing First-Login Password Change Workflow ---\n";
+        // 1. Login user without auto-clearing must_change_password
+        $token = $this->login('sarah.jenkins@officeassist.com', 'password123', 'test_user', false);
+
+        // 2. Verify protected request is blocked with MUST_CHANGE_PASSWORD
+        $blockedRes = $this->request('test_user', 'GET', '/requests');
+        $this->assert("P1. Security: API Blocks User with must_change_password = 1 (HTTP 403)", $blockedRes['code'] === 403 && ($blockedRes['body']['code'] ?? '') === 'MUST_CHANGE_PASSWORD');
+
+        // 3. Password mismatch validation
+        $mismatchRes = $this->request('test_user', 'POST', '/auth/change-password', [
+            'current_password' => 'password123',
+            'new_password' => 'newpass123',
+            'confirm_password' => 'differentpass'
+        ]);
+        $this->assert("P2. Validation: Password Change Rejects Mismatched Passwords", $mismatchRes['code'] === 400);
+
+        // 4. Short password validation
+        $shortRes = $this->request('test_user', 'POST', '/auth/change-password', [
+            'current_password' => 'password123',
+            'new_password' => '123',
+            'confirm_password' => '123'
+        ]);
+        $this->assert("P3. Validation: Password Change Rejects Short Passwords (< 6 chars)", $shortRes['code'] === 400);
+
+        // 5. Successful password change
+        $changeRes = $this->request('test_user', 'POST', '/auth/change-password', [
+            'current_password' => 'password123',
+            'new_password' => 'newpassword123',
+            'confirm_password' => 'newpassword123'
+        ]);
+        $this->assert("P4. Workflow: Password Change Succeeds & Clears Flag", $changeRes['code'] === 200 && ($changeRes['body']['data']['user']['must_change_password'] ?? true) === false);
+
+        // 6. Verify protected request now allowed
+        $allowedRes = $this->request('test_user', 'GET', '/requests');
+        $this->assert("P5. Security: Protected API Accessible After Password Change (HTTP 200)", $allowedRes['code'] === 200);
+        echo "\n";
+    }
+
+    private function login(string $email, string $password, string $roleKey, bool $autoClearPasswordFlag = true): string {
         $ch = curl_init(BASE_URL . '/auth/login');
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
@@ -62,6 +105,9 @@ class Phase54TestSuite {
         curl_close($ch);
 
         if (!($body['success'] ?? false)) {
+            if ($password === 'password123' && $autoClearPasswordFlag) {
+                return $this->login($email, 'newpassword123', $roleKey, false);
+            }
             throw new Exception("Login failed for $email: " . ($body['message'] ?? 'Unknown error'));
         }
 
@@ -72,14 +118,34 @@ class Phase54TestSuite {
         }
         $this->cookies[$roleKey] = rtrim($cookieHeader, '; ');
 
-        return $body['data']['token'];
+        $token = $body['data']['token'];
+        $this->tokens[$roleKey] = $token;
+        $mustChange = $body['data']['user']['must_change_password'] ?? false;
+
+        if ($mustChange && $autoClearPasswordFlag) {
+            $changeRes = $this->request($roleKey, 'POST', '/auth/change-password', [
+                'current_password' => $password,
+                'new_password' => 'newpassword123',
+                'confirm_password' => 'newpassword123'
+            ]);
+            if (!empty($changeRes['body']['data']['token'])) {
+                $token = $changeRes['body']['data']['token'];
+                $this->tokens[$roleKey] = $token;
+            }
+        }
+
+        return $token;
     }
 
     private function request(string $roleKey, string $method, string $endpoint, ?array $payload = null): array {
         $ch = curl_init(BASE_URL . $endpoint);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HEADER, true);
 
         $headers = ['Content-Type: application/json'];
+        if (isset($this->tokens[$roleKey])) {
+            $headers[] = 'Authorization: Bearer ' . $this->tokens[$roleKey];
+        }
         if (isset($this->cookies[$roleKey])) {
             curl_setopt($ch, CURLOPT_COOKIE, $this->cookies[$roleKey]);
         }
@@ -96,13 +162,25 @@ class Phase54TestSuite {
 
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         $response = curl_exec($ch);
+        $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        $header = substr($response, 0, $headerSize);
+        $bodyRaw = substr($response, $headerSize);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
+        preg_match_all('/^Set-Cookie:\s*([^;]*)/mi', $header, $matches);
+        if (!empty($matches[1])) {
+            $cookieHeader = '';
+            foreach ($matches[1] as $item) {
+                $cookieHeader .= $item . '; ';
+            }
+            $this->cookies[$roleKey] = rtrim($cookieHeader, '; ');
+        }
+
         return [
             'code' => $httpCode,
-            'body' => json_decode($response, true),
-            'raw' => $response
+            'body' => json_decode($bodyRaw, true),
+            'raw' => $bodyRaw
         ];
     }
 

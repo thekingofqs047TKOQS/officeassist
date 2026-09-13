@@ -81,15 +81,15 @@ INSERT INTO request_categories (department_id, name, description, status) VALUES
 -- ----------------------------------------------------------------------------
 -- 4. Users (All passwords: "password123")
 -- ----------------------------------------------------------------------------
-INSERT INTO users (id, employee_id, full_name, email, phone, password_hash, department_id, location_id, role, status) VALUES
-(1, 'EMP-001', 'System Administrator', 'admin@officeassist.com', '+1-555-0101', '$2y$10$iXp4tq0uiU7gafPc7gaxRubzCUK3qygy7/Bl1q5sDnciVeksoVXJS', 1, 4, 'SYSTEM_ADMIN', 'ACTIVE'),
-(2, 'EMP-002', 'Alex Mercer (IT Manager)', 'alex.mercer@officeassist.com', '+1-555-0102', '$2y$10$iXp4tq0uiU7gafPc7gaxRubzCUK3qygy7/Bl1q5sDnciVeksoVXJS', 1, 4, 'DEPARTMENT_MANAGER', 'ACTIVE'),
-(3, 'EMP-003', 'John Doe (IT Staff)', 'john.doe@officeassist.com', '+1-555-0103', '$2y$10$iXp4tq0uiU7gafPc7gaxRubzCUK3qygy7/Bl1q5sDnciVeksoVXJS', 1, 4, 'DEPARTMENT_STAFF', 'ACTIVE'),
-(4, 'EMP-004', 'Mary Smith (IT Staff)', 'mary.smith@officeassist.com', '+1-555-0104', '$2y$10$iXp4tq0uiU7gafPc7gaxRubzCUK3qygy7/Bl1q5sDnciVeksoVXJS', 1, 4, 'DEPARTMENT_STAFF', 'ACTIVE'),
-(5, 'EMP-005', 'Robert Vance (Maint Manager)', 'robert.vance@officeassist.com', '+1-555-0105', '$2y$10$iXp4tq0uiU7gafPc7gaxRubzCUK3qygy7/Bl1q5sDnciVeksoVXJS', 2, 6, 'DEPARTMENT_MANAGER', 'ACTIVE'),
-(6, 'EMP-006', 'David Miller (Maint Staff)', 'david.miller@officeassist.com', '+1-555-0106', '$2y$10$iXp4tq0uiU7gafPc7gaxRubzCUK3qygy7/Bl1q5sDnciVeksoVXJS', 2, 6, 'DEPARTMENT_STAFF', 'ACTIVE'),
-(7, 'EMP-007', 'Sarah Jenkins (Marketing)', 'sarah.jenkins@officeassist.com', '+1-555-0107', '$2y$10$iXp4tq0uiU7gafPc7gaxRubzCUK3qygy7/Bl1q5sDnciVeksoVXJS', 5, 2, 'EMPLOYEE', 'ACTIVE'),
-(8, 'EMP-008', 'Michael Brown (Finance)', 'michael.brown@officeassist.com', '+1-555-0108', '$2y$10$iXp4tq0uiU7gafPc7gaxRubzCUK3qygy7/Bl1q5sDnciVeksoVXJS', 3, 5, 'EMPLOYEE', 'ACTIVE');
+INSERT INTO users (id, employee_id, full_name, email, phone, password_hash, department_id, location_id, role, status, must_change_password) VALUES
+(1, 'EMP-001', 'System Administrator', 'admin@officeassist.com', '+1-555-0101', '$2y$10$iXp4tq0uiU7gafPc7gaxRubzCUK3qygy7/Bl1q5sDnciVeksoVXJS', 1, 4, 'SYSTEM_ADMIN', 'ACTIVE', 1),
+(2, 'EMP-002', 'Alex Mercer (IT Manager)', 'alex.mercer@officeassist.com', '+1-555-0102', '$2y$10$iXp4tq0uiU7gafPc7gaxRubzCUK3qygy7/Bl1q5sDnciVeksoVXJS', 1, 4, 'DEPARTMENT_MANAGER', 'ACTIVE', 1),
+(3, 'EMP-003', 'John Doe (IT Staff)', 'john.doe@officeassist.com', '+1-555-0103', '$2y$10$iXp4tq0uiU7gafPc7gaxRubzCUK3qygy7/Bl1q5sDnciVeksoVXJS', 1, 4, 'DEPARTMENT_STAFF', 'ACTIVE', 1),
+(4, 'EMP-004', 'Mary Smith (IT Staff)', 'mary.smith@officeassist.com', '+1-555-0104', '$2y$10$iXp4tq0uiU7gafPc7gaxRubzCUK3qygy7/Bl1q5sDnciVeksoVXJS', 1, 4, 'DEPARTMENT_STAFF', 'ACTIVE', 1),
+(5, 'EMP-005', 'Robert Vance (Maint Manager)', 'robert.vance@officeassist.com', '+1-555-0105', '$2y$10$iXp4tq0uiU7gafPc7gaxRubzCUK3qygy7/Bl1q5sDnciVeksoVXJS', 2, 6, 'DEPARTMENT_MANAGER', 'ACTIVE', 1),
+(6, 'EMP-006', 'David Miller (Maint Staff)', 'david.miller@officeassist.com', '+1-555-0106', '$2y$10$iXp4tq0uiU7gafPc7gaxRubzCUK3qygy7/Bl1q5sDnciVeksoVXJS', 2, 6, 'DEPARTMENT_STAFF', 'ACTIVE', 1),
+(7, 'EMP-007', 'Sarah Jenkins (Marketing)', 'sarah.jenkins@officeassist.com', '+1-555-0107', '$2y$10$iXp4tq0uiU7gafPc7gaxRubzCUK3qygy7/Bl1q5sDnciVeksoVXJS', 5, 2, 'EMPLOYEE', 'ACTIVE', 1),
+(8, 'EMP-008', 'Michael Brown (Finance)', 'michael.brown@officeassist.com', '+1-555-0108', '$2y$10$iXp4tq0uiU7gafPc7gaxRubzCUK3qygy7/Bl1q5sDnciVeksoVXJS', 3, 5, 'EMPLOYEE', 'ACTIVE', 1);
 
 -- ----------------------------------------------------------------------------
 -- 5. Department Service Staff Memberships

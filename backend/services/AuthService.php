@@ -58,6 +58,7 @@ class AuthService {
         $memberships = $memberStmt->fetchAll();
 
         unset($user['password_hash']);
+        $user['must_change_password'] = (bool)($user['must_change_password'] ?? false);
         $user['service_memberships'] = $memberships;
 
         return [
@@ -69,7 +70,7 @@ class AuthService {
     public static function getUserById(int $userId): ?array {
         $db = Database::getInstance();
         $stmt = $db->prepare("
-            SELECT u.id, u.employee_id, u.full_name, u.email, u.phone, u.role, u.status,
+            SELECT u.id, u.employee_id, u.full_name, u.email, u.phone, u.role, u.status, u.must_change_password,
                    u.department_id, d.name AS department_name, d.code AS department_code,
                    u.location_id, l.building, l.floor, l.room, u.profile_photo, u.last_login_at, u.created_at
             FROM users u
@@ -81,6 +82,7 @@ class AuthService {
         $user = $stmt->fetch();
 
         if ($user) {
+            $user['must_change_password'] = (bool)($user['must_change_password'] ?? false);
             $memberStmt = $db->prepare("
                 SELECT dm.department_id, d.name AS department_name, d.code AS department_code, dm.role_in_department
                 FROM department_members dm

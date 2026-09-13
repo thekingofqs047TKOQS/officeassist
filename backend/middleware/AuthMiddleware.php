@@ -54,6 +54,26 @@ class AuthMiddleware {
             exit(0);
         }
 
+        // Prevent users with must_change_password flag from accessing other API resources until password is changed
+        if (!empty($user['must_change_password'])) {
+            $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+            $uri = rtrim($uri, '/');
+            if (strpos($uri, '/api') === 0) {
+                $uri = substr($uri, 4);
+            }
+            $allowedEndpoints = ['/auth/change-password', '/auth/logout', '/auth/me'];
+            if (!in_array($uri, $allowedEndpoints)) {
+                http_response_code(403);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Password change required before accessing system resources.',
+                    'code' => 'MUST_CHANGE_PASSWORD',
+                    'must_change_password' => true
+                ]);
+                exit(0);
+            }
+        }
+
         return $user;
     }
 }
