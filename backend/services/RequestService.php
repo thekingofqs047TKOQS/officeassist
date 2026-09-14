@@ -143,6 +143,7 @@ class RequestService {
             SELECT r.id, r.request_number, r.title, r.priority, r.status, r.created_at, r.updated_at,
                    r.assigned_at, r.started_at, r.resolved_at, r.closed_at,
                    r.requester_id, u_req.full_name AS requester_name, u_req.email AS requester_email, u_req.employee_id AS requester_employee_id,
+                   d_req.name AS requester_department_name, d_req.code AS requester_department_code,
                    r.department_id, d.name AS department_name, d.code AS department_code,
                    r.category_id, c.name AS category_name,
                    r.assigned_staff_id, u_staff.full_name AS assigned_staff_name,
@@ -150,6 +151,7 @@ class RequestService {
                    l.building, l.floor, l.room
             FROM requests r
             JOIN users u_req ON r.requester_id = u_req.id
+            LEFT JOIN departments d_req ON u_req.department_id = d_req.id
             JOIN departments d ON r.department_id = d.id
             LEFT JOIN request_categories c ON r.category_id = c.id
             LEFT JOIN users u_staff ON r.assigned_staff_id = u_staff.id
@@ -248,12 +250,14 @@ class RequestService {
         $stmt = $db->prepare("
             SELECT r.*,
                    u_req.full_name AS requester_name, u_req.email AS requester_email, u_req.phone AS requester_phone, u_req.employee_id AS requester_employee_id,
+                   d_req.name AS requester_department_name, d_req.code AS requester_department_code,
                    d.name AS department_name, d.code AS department_code,
                    c.name AS category_name,
                    u_staff.full_name AS assigned_staff_name, u_staff.email AS assigned_staff_email,
                    l.building, l.floor, l.room
             FROM requests r
             JOIN users u_req ON r.requester_id = u_req.id
+            LEFT JOIN departments d_req ON u_req.department_id = d_req.id
             JOIN departments d ON r.department_id = d.id
             LEFT JOIN request_categories c ON r.category_id = c.id
             LEFT JOIN users u_staff ON r.assigned_staff_id = u_staff.id

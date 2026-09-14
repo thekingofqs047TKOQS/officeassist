@@ -71,8 +71,8 @@ class UserController {
         $email = trim($body['email'] ?? '');
         $phone = trim($body['phone'] ?? '');
         $role = trim($body['role'] ?? 'EMPLOYEE');
-        $departmentId = isset($body['department_id']) ? (int)$body['department_id'] : null;
-        $locationId = isset($body['location_id']) ? (int)$body['location_id'] : null;
+        $departmentId = !empty($body['department_id']) ? (int)$body['department_id'] : null;
+        $locationId = !empty($body['location_id']) ? (int)$body['location_id'] : null;
         $appConfig = require __DIR__ . '/../config/app.php';
         $defaultPassword = $appConfig['default_password'] ?? 'password123';
         $password = !empty($body['password']) ? trim($body['password']) : $defaultPassword;
@@ -110,6 +110,10 @@ class UserController {
                 $serviceRole = $body['service_role'] ?? (($role === 'DEPARTMENT_HEAD' || $role === 'DEPARTMENT_MANAGER') ? 'MANAGER' : 'STAFF');
                 $memStmt = $db->prepare("INSERT INTO department_members (department_id, user_id, role_in_department) VALUES (:dept_id, :user_id, :role_in_dept)");
                 $memStmt->execute(['dept_id' => (int)$body['service_department_id'], 'user_id' => $newUserId, 'role_in_dept' => $serviceRole]);
+            } else if (!empty($departmentId) && in_array($role, ['DEPARTMENT_HEAD', 'DEPARTMENT_MANAGER', 'DEPARTMENT_STAFF'])) {
+                $serviceRole = in_array($role, ['DEPARTMENT_HEAD', 'DEPARTMENT_MANAGER']) ? 'MANAGER' : 'STAFF';
+                $memStmt = $db->prepare("INSERT INTO department_members (department_id, user_id, role_in_department) VALUES (:dept_id, :user_id, :role_in_dept) ON DUPLICATE KEY UPDATE role_in_department = :role_in_dept");
+                $memStmt->execute(['dept_id' => $departmentId, 'user_id' => $newUserId, 'role_in_dept' => $serviceRole]);
             }
 
             AuditService::log($currentUser['id'], 'USER_CREATED', 'users', $newUserId, null, ['employee_id' => $employeeId, 'role' => $role]);

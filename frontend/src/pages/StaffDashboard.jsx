@@ -171,7 +171,14 @@ export function StaffDashboard() {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
                 {requests.map((r) => (
                   <tr key={r.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="px-6 py-4 text-slate-900 dark:text-white font-bold">{r.requester_name}</td>
+                    <td className="px-6 py-4 text-slate-900 dark:text-white font-bold">
+                      {r.requester_name}
+                      {r.requester_department_name && (
+                        <span className="block text-[11px] font-normal text-slate-500 dark:text-slate-400">
+                          {r.requester_department_name}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 font-semibold text-slate-900 dark:text-slate-200 max-w-xs truncate">{r.title}</td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{r.department_name}</td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-300 font-semibold">

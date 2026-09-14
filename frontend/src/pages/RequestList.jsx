@@ -172,7 +172,14 @@ export function RequestList({ viewMode = 'all' }) {
                       </>
                     ) : (
                       <>
-                        <td className="px-6 py-4 text-slate-900 dark:text-white font-bold">{r.requester_name}</td>
+                        <td className="px-6 py-4 text-slate-900 dark:text-white font-bold">
+                          {r.requester_name}
+                          {r.requester_department_name && (
+                            <span className="block text-[11px] font-normal text-slate-500 dark:text-slate-400">
+                              {r.requester_department_name}
+                            </span>
+                          )}
+                        </td>
                         <td className="px-6 py-4 font-semibold text-slate-900 dark:text-slate-200 max-w-xs truncate">{r.title}</td>
                         <td className="px-6 py-4 text-slate-600 dark:text-slate-400">{r.department_name}</td>
                         <td className="px-6 py-4 text-slate-600 dark:text-slate-300 font-semibold">{r.assigned_staff_name || 'Unassigned'}</td>
